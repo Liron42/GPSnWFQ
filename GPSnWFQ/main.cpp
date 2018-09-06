@@ -190,19 +190,30 @@ int main()
 
 	map <int, Flow> flowHashTable;  map <int,Flow> :: iterator itr_1, itr_2,itr_3;
 	std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> packetsGPS_q;
-	std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> packetsWFQ_q;
+	std::queue<Packet*> packetsWFQ_q;
 
 		
 	while (fgets(newLine, LINE_SIZE, stdin) != NULL) {
 
 		new_packet = ProcessPacket(newLine);
 		if (new_packet->GetTime() > curr_time) {
-			to_send = packetsWFQ_q.top();
-			itr_3 = flowHashTable.find(to_send->GetHash());
-			itr_3->second.packets_q.pop();
+			if (packetsWFQ_q.empty())
+			{
+				packetsWFQ_q.push(packetsGPS_q.top());
+				
+				itr_3 = flowHashTable.find(packetsGPS_q.top()->GetHash());
+				itr_3->second.packets_q.pop();
+				if (itr_3->second.packets_q.empty())
+					sum_of_weights = sum_of_weights - packetsGPS_q.top()->GetWeight();
+				packetsGPS_q.pop();
+			}
+			to_send = packetsWFQ_q.front();
 			packetsWFQ_q.pop();
 			SendPacketWFQ(to_send,curr_time);
-			if (curr_time + (to_send->GetLength()) < new_packet->GetTime())
+			if (curr_time + (to_send->GetLength()) > new_packet->GetTime()) //Continue from here - fix update time
+				curr_time = curr_time + to_send->GetLength();
+
+			else if (curr_time + (to_send->GetLength()) < new_packet->GetTime() && packetsWFQ_q.empty())
 				curr_time = new_packet->GetTime();
 			else
 				curr_time = curr_time + to_send->GetLength();
@@ -217,12 +228,12 @@ int main()
 		if (itr_1 != flowHashTable.end())
 		{
 			itr_1->second.SetNumOfEntries(itr_1->second.GetNumOfEntries()+1);
-			/*
+			
 			if (new_packet->GetWeight() != DEFAULT_WEIGHT)
 				itr_1->second.SetWeight(new_packet->GetWeight());
 			else
 				new_packet->SetWeight(itr_1->second.GetWeight());
-				*/
+				
 		}
 
 		else
@@ -260,12 +271,18 @@ int main()
 		if (next_event == Arrival)
 		{
 			new_packet->SetRound(round_t);
+			packetsGPS_q.push(new_packet);
+			itr_1 = flowHashTable.find(hash);
+			itr_1->second.packets_q.push(new_packet);
 			sum_of_weights = sum_of_weights + temp_weight;
 
 		}
 
 		if (next_event == Leaving)
 		{
+			packetsGPS_q.push(new_packet);
+			itr_1 = flowHashTable.find(hash);
+			itr_1->second.packets_q.push(new_packet);
 			leaving_packet = packetsGPS_q.top();
 			packetsGPS_q.pop();
 			packetsWFQ_q.push(leaving_packet);
@@ -284,22 +301,20 @@ int main()
 				temp_weight = 0;
 
 			sum_of_weights = sum_of_weights + temp_weight;
-			round_new = leaving_packet->GetLast() + (x_new / (sum_of_weights));
+			if (sum_of_weights == 0) { round_new = 0; }
+			else { round_new = leaving_packet->GetLast() + (x_new / (sum_of_weights)); }
 			new_packet->SetRound(round_new);
 			round_t = round_new;
 
 
 		}
 
-		if (!packetsWFQ_q.empty()) //continue from here - fix current_time
-			curr_time = curr_time + packetsWFQ_q.top()->GetLength();
-		else
+		if (packetsWFQ_q.empty()) //continue from here - fix current_time
 			curr_time = curr_time + new_packet->GetLength();
 
-		GPS_time = GPS_time + new_packet->GetTime();
-		packetsGPS_q.push(new_packet);
-		itr_1 = flowHashTable.find(hash);
-		itr_1->second.packets_q.push(new_packet);
+		GPS_time = new_packet->GetTime();
+		//packetsGPS_q.push(new_packet);
+
 		
 
 		
