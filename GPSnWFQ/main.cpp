@@ -178,7 +178,8 @@ int main()
 		sum_of_weights = 0,
 		curr_time = 0,
 		temp_weight = 0,
-		GPS_time = 0;
+		GPS_time = 0,
+		size_inter = 0;
 	float default_last = 0,
 		round_t = 0,	
 		minLast = 0,
@@ -190,8 +191,8 @@ int main()
 
 	map <int, Flow> flowHashTable;  map <int,Flow> :: iterator itr_1, itr_2,itr_3;
 	std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> packetsGPS_q;
-	//std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> packetsWFQ_q;
-	std::queue<Packet*> packetsWFQ_q;
+	std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> packetsWFQ_q;
+	std::queue<Packet*> packetsWFQ_q_inter;
 
 		
 	while (fgets(newLine, LINE_SIZE, stdin) != NULL) {
@@ -199,6 +200,12 @@ int main()
 		new_packet = ProcessPacket(newLine);
 
 		if (new_packet->GetTime() > curr_time) {
+			size_inter = packetsWFQ_q_inter.size();
+			for (int i = 0; i < size_inter; i++)
+			{
+				packetsWFQ_q.push(packetsWFQ_q_inter.front());
+				packetsWFQ_q_inter.pop();
+			}
 			if (packetsWFQ_q.empty())
 			{
 				packetsWFQ_q.push(packetsGPS_q.top());
@@ -210,7 +217,9 @@ int main()
 				packetsGPS_q.pop();
 
 			}
-			to_send = packetsWFQ_q.front();
+			while(!packetsWFQ_q.empty() && packetsWFQ_q.top()->GetTime() <= curr_time)
+			{ 
+			to_send = packetsWFQ_q.top();
 			packetsWFQ_q.pop();
 			if (curr_time < to_send->GetTime())
 				curr_time = to_send->GetTime();
@@ -227,7 +236,7 @@ int main()
 					curr_time = new_packet->GetTime();
 
 			}
-			
+			}
 		}
 			
 		
@@ -296,7 +305,7 @@ int main()
 			itr_1->second.packets_q.push(new_packet);
 			leaving_packet = packetsGPS_q.top();
 			packetsGPS_q.pop();
-			packetsWFQ_q.push(leaving_packet);
+			packetsWFQ_q_inter.push(leaving_packet);
 			if (leaving_packet->GetHash() == new_packet->GetHash())
 				itr_1->second.packets_q.pop();
 			
@@ -319,13 +328,9 @@ int main()
 
 
 		}
-		/*
-		if (packetsWFQ_q.empty()) //continue from here - fix current_time
-			curr_time = curr_time + new_packet->GetLength();
-			*/
 
 		GPS_time = new_packet->GetTime();
-		//packetsGPS_q.push(new_packet);
+
 
 		
 
