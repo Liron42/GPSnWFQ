@@ -190,12 +190,14 @@ int main()
 
 	map <int, Flow> flowHashTable;  map <int,Flow> :: iterator itr_1, itr_2,itr_3;
 	std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> packetsGPS_q;
+	//std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> packetsWFQ_q;
 	std::queue<Packet*> packetsWFQ_q;
 
 		
 	while (fgets(newLine, LINE_SIZE, stdin) != NULL) {
 
 		new_packet = ProcessPacket(newLine);
+
 		if (new_packet->GetTime() > curr_time) {
 			if (packetsWFQ_q.empty())
 			{
@@ -206,18 +208,26 @@ int main()
 				if (itr_3->second.packets_q.empty())
 					sum_of_weights = sum_of_weights - packetsGPS_q.top()->GetWeight();
 				packetsGPS_q.pop();
+
 			}
 			to_send = packetsWFQ_q.front();
 			packetsWFQ_q.pop();
-			SendPacketWFQ(to_send,curr_time);
-			if (curr_time + (to_send->GetLength()) > new_packet->GetTime()) //Continue from here - fix update time
+			if (curr_time < to_send->GetTime())
+				curr_time = to_send->GetTime();
+			SendPacketWFQ(to_send, curr_time);
+
+			if (curr_time + (to_send->GetLength()) > new_packet->GetTime()) 
 				curr_time = curr_time + to_send->GetLength();
 
-			else if (curr_time + (to_send->GetLength()) < new_packet->GetTime() && packetsWFQ_q.empty())
-				curr_time = new_packet->GetTime();
-			else
-				curr_time = curr_time + to_send->GetLength();
+			else if (curr_time + (to_send->GetLength()) < new_packet->GetTime())
+			{
+				if (!packetsWFQ_q.empty())
+					curr_time = curr_time + to_send->GetLength();
+				else
+					curr_time = new_packet->GetTime();
 
+			}
+			
 		}
 			
 		
@@ -244,6 +254,7 @@ int main()
 			new_flow.SetNumOfEntries(DEFAULT_ENTRIES);
 			flowHashTable[hash] = new_flow;
 		}
+
 		if (packetsGPS_q.size() == 0)
 			minLast = 0;
 		else
@@ -308,9 +319,10 @@ int main()
 
 
 		}
-
+		/*
 		if (packetsWFQ_q.empty()) //continue from here - fix current_time
 			curr_time = curr_time + new_packet->GetLength();
+			*/
 
 		GPS_time = new_packet->GetTime();
 		//packetsGPS_q.push(new_packet);

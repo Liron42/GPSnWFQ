@@ -87,9 +87,13 @@ struct LessThanByLast
 {
 	bool operator()(Packet* packet1,Packet* packet2) const
 	{
+		if (packet1->GetLast() == packet2->GetLast())
+			return packet1->GetTime() > packet2->GetTime();
 		return packet1->GetLast() > packet2->GetLast();
 	}
 };
+
+
 
 
 
