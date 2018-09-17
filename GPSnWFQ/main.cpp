@@ -139,6 +139,7 @@ float Packet::CalculateX(float lastVal, float round_last, int sum_of_weights)
 {
 	return (sum_of_weights*(lastVal - round_last));
 }
+
 void SendPacketWFQ(Packet *data, int Time)
 {
 
@@ -165,6 +166,16 @@ void SendPacketWFQ(Packet *data, int Time)
 	fprintf(stdout, " ");
 	fprintf(stdout, "\n");
 
+}
+
+void FillWFQq(std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> *packetsWFQ_q, std::queue<Packet*> *packetsWFQ_q_inter)
+{
+	int size_inter = packetsWFQ_q_inter->size();
+	for (int i = 0; i < size_inter; i++)
+	{
+		packetsWFQ_q->push(packetsWFQ_q_inter->front());
+		packetsWFQ_q_inter->pop();
+	}
 }
 
 
@@ -200,6 +211,7 @@ int main()
 		new_packet = ProcessPacket(newLine);
 
 		if (new_packet->GetTime() > curr_time) {
+			//FillWFQq(&packetsWFQ_q, &packetsWFQ_q_inter);
 			size_inter = packetsWFQ_q_inter.size();
 			for (int i = 0; i < size_inter; i++)
 			{
@@ -217,7 +229,7 @@ int main()
 				packetsGPS_q.pop();
 
 			}
-			while(!packetsWFQ_q.empty() && packetsWFQ_q.top()->GetTime() <= curr_time)
+			while(!packetsWFQ_q.empty() && packetsWFQ_q.top()->GetTime() <= curr_time && curr_time <= new_packet->GetTime())
 			{ 
 			to_send = packetsWFQ_q.top();
 			packetsWFQ_q.pop();
@@ -331,19 +343,6 @@ int main()
 
 		GPS_time = new_packet->GetTime();
 
-
-		
-
-		
-		
-
-
-		
-		
-
-			
-		
-
-		//return 0;
 	}
+	//add last packet
 }
