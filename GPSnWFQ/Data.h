@@ -58,19 +58,16 @@ private:
 class Flow
 {
 public:
-	//Flow(float lastValI, int weightI, int numOfEntriesI);
 	Flow();
-	int GetNumOfEntries(void);
 	int GetWeight(void);
 	float GetLastVal(void);
-	void SetNumOfEntries(int value);
 	void SetWeight(int value);
 	void SetLast(float value);
 	priority_queue<Packet*, vector<Packet*>, less<vector<Packet*>::value_type> > packets_q;
 
 private:
 	float _lastVal;
-	int _weightFlow;
+	int _weightFlow = -1;
 	int _numOfEntries;
 
 	
