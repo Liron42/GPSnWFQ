@@ -189,7 +189,7 @@ int HandleLeavingPacket(int curr_time, std::priority_queue<Packet*, std::vector<
 		if (curr_time + (to_send->GetLength()) > new_packet->GetTime())
 			curr_time = curr_time + to_send->GetLength();
 
-		else if (curr_time + (to_send->GetLength()) < new_packet->GetTime())
+		else if (curr_time + (to_send->GetLength()) <= new_packet->GetTime())
 		{
 			if (!packetsWFQ_q->empty())
 				curr_time = curr_time + to_send->GetLength();
@@ -263,7 +263,10 @@ int main()
 	while (fgets(newLine, LINE_SIZE, stdin) != NULL) {
 
 		new_packet = ProcessPacket(newLine);
-
+		/*
+		if (new_packet->GetTime() == 309910)
+			findFlow1 = flowHashTable.find(309910);
+			*/
 		if (new_packet->GetTime() > curr_time) {
 			FillWFQq(&packetsWFQ_q, &packetsWFQ_q_inter);
 			if (packetsWFQ_q.empty())
@@ -277,6 +280,7 @@ int main()
 			}
 			curr_time = HandleLeavingPacket(curr_time, &packetsWFQ_q, new_packet);
 		}
+
 			
 		
 		new_packet->CalculateHash();
