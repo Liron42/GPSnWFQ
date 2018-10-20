@@ -15,6 +15,7 @@ using namespace std;
 class Packet
 {
 public:
+	//Packet();
 	Packet(int timeI, char SaddI[ADD_SIZE],int SportI, char DaddI[ADD_SIZE],int DportI, int lengthI);
 	//~Packet();
 
