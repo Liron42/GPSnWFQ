@@ -38,6 +38,7 @@ public:
 	void SetRound(float round_val);
 	float CalculateRound(float round_t, float curr_time, int sum_of_weights,int time);
 	float CalculateLast(float round_t, float last, int weight, int length);
+	float CalculateX(float lastVal, float round_last, int sum_of_weights);
 
 
 private:
@@ -65,7 +66,7 @@ public:
 	void SetNumOfEntries(int value);
 	void SetWeight(int value);
 	void SetLast(float value);
-	priority_queue<Packet, vector<Packet>, less<vector<Packet>::value_type> > packets_q;
+	priority_queue<Packet*, vector<Packet*>, less<vector<Packet*>::value_type> > packets_q;
 
 private:
 	float _lastVal;
@@ -86,7 +87,7 @@ struct LessThanByLast
 {
 	bool operator()(Packet* packet1,Packet* packet2) const
 	{
-		return packet1->GetLast() < packet2->GetLast();
+		return packet1->GetLast() > packet2->GetLast();
 	}
 };
 
