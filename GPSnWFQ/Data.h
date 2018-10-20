@@ -15,6 +15,7 @@ using namespace std;
 class Packet
 {
 public:
+	//Packet();
 	Packet(int timeI, char SaddI[ADD_SIZE],int SportI, char DaddI[ADD_SIZE],int DportI, int lengthI);
 	//~Packet();
 
@@ -58,19 +59,16 @@ private:
 class Flow
 {
 public:
-	//Flow(float lastValI, int weightI, int numOfEntriesI);
 	Flow();
-	int GetNumOfEntries(void);
 	int GetWeight(void);
 	float GetLastVal(void);
-	void SetNumOfEntries(int value);
 	void SetWeight(int value);
 	void SetLast(float value);
 	priority_queue<Packet*, vector<Packet*>, less<vector<Packet*>::value_type> > packets_q;
 
 private:
 	float _lastVal;
-	int _weightFlow;
+	int _weightFlow = -1;
 	int _numOfEntries;
 
 	
@@ -87,9 +85,13 @@ struct LessThanByLast
 {
 	bool operator()(Packet* packet1,Packet* packet2) const
 	{
+		if (packet1->GetLast() == packet2->GetLast())
+			return packet1->GetTime() > packet2->GetTime();
 		return packet1->GetLast() > packet2->GetLast();
 	}
 };
+
+
 
 
 
