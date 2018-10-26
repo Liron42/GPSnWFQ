@@ -263,13 +263,28 @@ int main()
 	while (fgets(newLine, LINE_SIZE, stdin) != NULL) {
 
 		new_packet = ProcessPacket(newLine);
-		/*
-		if (new_packet->GetTime() == 309910)
-			findFlow1 = flowHashTable.find(309910);
-			*/
+	
+		if (new_packet->GetTime() == 77382)
+			findFlow1 = flowHashTable.find(77382);
+			
 		if (new_packet->GetTime() > curr_time) {
 			FillWFQq(&packetsWFQ_q, &packetsWFQ_q_inter);
+			/*
 			if (packetsWFQ_q.empty())
+			{
+				//packetsWFQ_q.push(packetsGPS_q.top());
+				
+				findFlow1 = flowHashTable.find(packetsGPS_q.top()->GetHash());
+				findFlow1->second.packets_q.pop();
+				if (findFlow1->second.packets_q.empty())
+					sum_of_weights = sum_of_weights - packetsGPS_q.top()->GetWeight();
+				
+
+				
+			}
+		*/
+			
+			while (!packetsGPS_q.empty() && packetsGPS_q.top()->GetLast() < new_packet->GetTime())
 			{
 				packetsWFQ_q.push(packetsGPS_q.top());
 				findFlow1 = flowHashTable.find(packetsGPS_q.top()->GetHash());
@@ -279,14 +294,14 @@ int main()
 				packetsGPS_q.pop();
 			}
 			curr_time = HandleLeavingPacket(curr_time, &packetsWFQ_q, new_packet);
+
+				
 		}
 
-			
-		
 		new_packet->CalculateHash();
 		hash = new_packet->GetHash();
 		
-		Flow new_flow = HandleFlow(&flowHashTable, new_packet, hash, default_last);
+		Flow new_flow = HandleFlow(&flowHashTable, new_packet, hash, default_last); //Not sure this is the right way to do it
 		if(new_flow.GetWeight() != -1) { flowHashTable[hash] = new_flow; }
 
 
@@ -305,6 +320,8 @@ int main()
 			new_packet->SetLast(new_packet->CalculateLast(round_t, findFlow2->second.GetLastVal(), new_packet->GetWeight(), new_packet->GetLength()));
 		else
 			new_packet->SetLast(new_packet->CalculateLast(round_t, default_last, new_packet->GetWeight(), new_packet->GetLength()));
+
+		findFlow2->second.SetLast(new_packet->GetLast());
 
 		round_t = new_packet->CalculateRound(round_t, GPS_time, sum_of_weights + temp_weight, new_packet->GetTime());
 		if (round_t <= minLast)
@@ -329,6 +346,7 @@ int main()
 			findFlow2->second.packets_q.push(new_packet);
 
 			leaving_packet = packetsGPS_q.top();
+			GPS_time = GPS_time + leaving_packet->GetLast();
 			packetsGPS_q.pop();
 			packetsWFQ_q_inter.push(leaving_packet);
 			if (leaving_packet->GetHash() == new_packet->GetHash())
@@ -351,7 +369,7 @@ int main()
 
 
 		}
-		GPS_time = new_packet->GetTime();
+		//GPS_time = new_packet->GetTime();
 
 	}
 	if (!packetsWFQ_q_inter.empty())
