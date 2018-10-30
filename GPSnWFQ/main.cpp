@@ -101,7 +101,8 @@ float Packet::CalculateRound(float round_t, float curr_time, int sum_of_weights,
 	float time_f = time,
 		sum_of_weights_f = sum_of_weights,res = 0;
 
-	x = time_f - curr_time;
+	//x = time_f - curr_time;
+	x = time - round_t;
 
 	if (sum_of_weights_f == 0)
 		return 0;
@@ -178,7 +179,7 @@ void FillWFQq(std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast>
 
 int HandleLeavingPacket(int curr_time, std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> *packetsWFQ_q, Packet* new_packet)
 {
-	while (!packetsWFQ_q->empty() && packetsWFQ_q->top()->GetTime() <= curr_time && curr_time <= new_packet->GetTime())
+	while (!packetsWFQ_q->empty() && packetsWFQ_q->top()->GetTime() <= curr_time )//&& curr_time <= new_packet->GetTime())
 	{
 		Packet* to_send = packetsWFQ_q->top();
 		packetsWFQ_q->pop();
@@ -264,8 +265,8 @@ int main()
 
 		new_packet = ProcessPacket(newLine);
 	
-		if (new_packet->GetTime() == 77382)
-			findFlow1 = flowHashTable.find(77382);
+		if (new_packet->GetTime() == 301446)
+			findFlow1 = flowHashTable.find(301446);
 			
 		if (new_packet->GetTime() > curr_time) {
 			FillWFQq(&packetsWFQ_q, &packetsWFQ_q_inter);
@@ -348,11 +349,16 @@ int main()
 			findFlow2->second.packets_q.push(new_packet);
 
 			leaving_packet = packetsGPS_q.top();
-			GPS_time = GPS_time + leaving_packet->GetLast();
-			packetsGPS_q.pop();
+			GPS_time = GPS_time + leaving_packet->GetLength();
+			if (packetsGPS_q.top()->GetLast() <= GPS_time)
+			{
+				packetsGPS_q.pop();
+				if (leaving_packet->GetHash() == new_packet->GetHash())
+					findFlow2->second.packets_q.pop();
+			}
+				
 			packetsWFQ_q_inter.push(leaving_packet);
-			if (leaving_packet->GetHash() == new_packet->GetHash())
-				findFlow2->second.packets_q.pop();
+
 			
 			x_new = new_packet->CalculateX(leaving_packet->GetLast(), leaving_packet->GetRound(), sum_of_weights);
 			
@@ -376,7 +382,7 @@ int main()
 	}
 	if (!packetsWFQ_q_inter.empty() || !packetsGPS_q.empty())
 	{
-		packetsWFQ_q_inter.push(packetsGPS_q.top());
+		//packetsWFQ_q_inter.push(packetsGPS_q.top());
 		FillWFQq(&packetsWFQ_q, &packetsWFQ_q_inter);
 		curr_time = HandleLeavingPacket(curr_time, &packetsWFQ_q, new_packet);
 	}
