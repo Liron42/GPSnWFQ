@@ -284,14 +284,16 @@ int main()
 			}
 		*/
 			
-			while (!packetsGPS_q.empty() && packetsGPS_q.top()->GetLast() < new_packet->GetTime())
+			while (!packetsGPS_q.empty() && (packetsGPS_q.top()->GetLast() < GPS_time || packetsGPS_q.top()->GetTime() == 0))
 			{
 				packetsWFQ_q.push(packetsGPS_q.top());
+				GPS_time = GPS_time + packetsGPS_q.top()->GetLast();
 				findFlow1 = flowHashTable.find(packetsGPS_q.top()->GetHash());
-				findFlow1->second.packets_q.pop();
+				if (!findFlow1->second.packets_q.empty()) { findFlow1->second.packets_q.pop(); }
 				if (findFlow1->second.packets_q.empty())
 					sum_of_weights = sum_of_weights - packetsGPS_q.top()->GetWeight();
-				packetsGPS_q.pop();
+				if (packetsGPS_q.top()->GetLast() <= GPS_time)
+					packetsGPS_q.pop();
 			}
 			curr_time = HandleLeavingPacket(curr_time, &packetsWFQ_q, new_packet);
 
@@ -372,8 +374,9 @@ int main()
 		//GPS_time = new_packet->GetTime();
 
 	}
-	if (!packetsWFQ_q_inter.empty())
+	if (!packetsWFQ_q_inter.empty() || !packetsGPS_q.empty())
 	{
+		packetsWFQ_q_inter.push(packetsGPS_q.top());
 		FillWFQq(&packetsWFQ_q, &packetsWFQ_q_inter);
 		curr_time = HandleLeavingPacket(curr_time, &packetsWFQ_q, new_packet);
 	}
