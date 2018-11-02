@@ -12,6 +12,7 @@
 #include <iostream>
 #include <algorithm> 
 #include <queue>
+#include <list> 
 
 using namespace std;
 
@@ -74,6 +75,7 @@ Packet* ProcessPacket(char * newLine) {
 	else
 		new_packet->SetWeight(atoi(tmpEntry[6]));
 
+	new_packet->SentinWFQ = 0;
 	return new_packet;
 
 
@@ -102,7 +104,7 @@ float Packet::CalculateRound(float round_t, float curr_time, int sum_of_weights,
 		sum_of_weights_f = sum_of_weights,res = 0;
 
 	//x = time_f - curr_time;
-	x = time - round_t;
+	x = time - curr_time;
 
 	if (sum_of_weights_f == 0)
 		res = (round_t + (x / 1));
@@ -167,40 +169,6 @@ void SendPacketWFQ(Packet *data, int Time)
 
 }
 
-void FillWFQq(std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> *packetsWFQ_q, std::queue<Packet*> *packetsWFQ_q_inter)
-{
-	int size_inter = packetsWFQ_q_inter->size();
-	for (int i = 0; i < size_inter; i++)
-	{
-		packetsWFQ_q->push(packetsWFQ_q_inter->front());
-		packetsWFQ_q_inter->pop();
-	}
-}
-
-int HandleLeavingPacket(int curr_time, std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> *packetsWFQ_q, Packet* new_packet)
-{
-	while (!packetsWFQ_q->empty() && packetsWFQ_q->top()->GetTime() <= curr_time)// && curr_time <= new_packet->GetTime())
-	{
-		Packet* to_send = packetsWFQ_q->top();
-		packetsWFQ_q->pop();
-		if (curr_time < to_send->GetTime())
-			curr_time = to_send->GetTime();
-		SendPacketWFQ(to_send, curr_time);
-
-		if (curr_time + (to_send->GetLength()) > new_packet->GetTime())
-			curr_time = curr_time + to_send->GetLength();
-
-		else if (curr_time + (to_send->GetLength()) <= new_packet->GetTime())
-		{
-			if (!packetsWFQ_q->empty())
-				curr_time = curr_time + to_send->GetLength();
-			else
-				curr_time = new_packet->GetTime();
-
-		}
-	}
-	return curr_time;
-}
 
 Flow HandleFlow(map <int, Flow> *flowHashTable, Packet* new_packet,int hash,int default_last)
 {
@@ -235,6 +203,41 @@ int CalculateTempWeight(map <int, Flow> flowHashTable, Packet* new_packet,int ha
 	return temp_weight;
 }
 
+Packet* DecideWFQ(std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> *packetsGPS_q)
+{
+	list <Packet*> queueSnapshot;
+	list <Packet*>::iterator it;
+	list <Packet*>::iterator it2;
+	std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> temp_q;
+	int i = 0;
+
+		while (!packetsGPS_q->empty())
+		{
+			temp_q.push(packetsGPS_q->top());
+			queueSnapshot.push_back(packetsGPS_q->top());
+			packetsGPS_q->pop();
+			i++;
+		}
+		
+		for (it = queueSnapshot.begin(); it != queueSnapshot.end(); ++it) {
+			
+			if ((*it)->SentinWFQ != 1)
+			{
+				(*it)->SentinWFQ = 1;
+				break;
+			}
+			}
+		for (it2 = queueSnapshot.begin(); it2 != queueSnapshot.end(); ++it2) {
+
+			packetsGPS_q->push((*it2));
+		}
+
+		if (it != queueSnapshot.end())
+			return (*it);
+		else
+			return NULL;
+}
+
 int main()
 {
 	char newLine[LINE_SIZE];
@@ -249,7 +252,6 @@ int main()
 		round_t = 0,
 		minLast = 0,
 		GPS_time = 0,
-		round_new = 0,
 		curr_round = 0,
 		x_new = 0;
 	
@@ -259,15 +261,11 @@ int main()
 	map <int, Flow> flowHashTable;  map <int,Flow> :: iterator findFlow1, findFlow2,findFlow3;
 	std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> packetsGPS_q;
 	std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> packetsWFQ_q;
-	std::queue<Packet*> packetsWFQ_q_inter;
 
 		
 	while (fgets(newLine, LINE_SIZE, stdin) != NULL) {
 
 		new_packet = ProcessPacket(newLine);
-	
-		if (new_packet->GetTime() == 57026)
-			findFlow1 = flowHashTable.find(57026);
 
 		new_packet->CalculateHash();
 		hash = new_packet->GetHash();
@@ -277,9 +275,7 @@ int main()
 
 		findFlow2 = flowHashTable.find(hash);
 		
-
-		temp_weight = CalculateTempWeight(flowHashTable, new_packet, hash);
-		curr_round = new_packet->CalculateRound(round_t, GPS_time, sum_of_weights + temp_weight, new_packet->GetTime());
+		curr_round = new_packet->CalculateRound(round_t, GPS_time, sum_of_weights, new_packet->GetTime());
 
 		if (packetsGPS_q.empty())
 			round_t = curr_round;
@@ -295,8 +291,33 @@ int main()
 				if (next_event == Arrival)
 				{
 
-					while (!packetsWFQ_q.empty())
+					if (new_packet->GetTime() > curr_time) { leaving_packet = DecideWFQ(&packetsGPS_q); }
+					while (leaving_packet != NULL && new_packet->GetTime() > curr_time)
 					{
+						packetsWFQ_q.push(leaving_packet);
+						if (curr_time < packetsWFQ_q.top()->GetTime())
+							SendPacketWFQ(packetsWFQ_q.top(), packetsWFQ_q.top()->GetTime());
+						else
+							SendPacketWFQ(packetsWFQ_q.top(), curr_time);
+						if (curr_time < packetsWFQ_q.top()->GetTime())
+							curr_time = packetsWFQ_q.top()->GetTime() + packetsWFQ_q.top()->GetLength();
+						else
+							curr_time = curr_time + packetsWFQ_q.top()->GetLength();
+						packetsWFQ_q.pop();
+						if (new_packet->GetTime() > curr_time) { leaving_packet = DecideWFQ(&packetsGPS_q); }
+					}
+					round_t = curr_round;
+					goto HandlePacket;
+
+				}
+
+				if (next_event == Leaving)
+				{
+
+					leaving_packet = packetsGPS_q.top();
+					
+					if (leaving_packet->SentinWFQ == 0){
+						packetsWFQ_q.push(leaving_packet);
 						if (curr_time < packetsWFQ_q.top()->GetTime())
 							SendPacketWFQ(packetsWFQ_q.top(), packetsWFQ_q.top()->GetTime());
 						else
@@ -307,67 +328,57 @@ int main()
 							curr_time = curr_time + packetsWFQ_q.top()->GetLength();
 						packetsWFQ_q.pop();
 					}
-					goto HandlePacket;
-
-				}
-
-				if (next_event == Leaving)
-				{
-
-					leaving_packet = packetsGPS_q.top();
-					packetsWFQ_q.push(leaving_packet);
-						if (curr_time < packetsWFQ_q.top()->GetTime())
-							SendPacketWFQ(packetsWFQ_q.top(), packetsWFQ_q.top()->GetTime());
-						else
-							SendPacketWFQ(packetsWFQ_q.top(), curr_time);
-						if (curr_time < packetsWFQ_q.top()->GetTime())
-							curr_time = packetsWFQ_q.top()->GetTime() + packetsWFQ_q.top()->GetLength();
-						else
-							curr_time = curr_time + packetsWFQ_q.top()->GetLength();
-						packetsWFQ_q.pop();
-
 					x_new = new_packet->CalculateX(leaving_packet->GetLast(), round_t, sum_of_weights);
 					round_t = leaving_packet->GetLast();
 					GPS_time = GPS_time + x_new;
 					packetsGPS_q.pop();
 					findFlow3 = flowHashTable.find(leaving_packet->GetHash());
-					if (findFlow3->second.packets_q.empty())
+					findFlow3->second.packets_q.pop();
+					if (findFlow3->second.packets_q.empty() && sum_of_weights != 0)
 						sum_of_weights = sum_of_weights - leaving_packet->GetWeight();
 
-					temp_weight = CalculateTempWeight(flowHashTable, new_packet, hash);
-
-					sum_of_weights = sum_of_weights + temp_weight;
-					//if (sum_of_weights == 0) { round_new = 0; }
-					if (sum_of_weights != 0) { curr_round = leaving_packet->GetLast() + (x_new / (sum_of_weights)); }
-
-
+					if (sum_of_weights != 0) { curr_round = new_packet->CalculateRound(round_t, GPS_time, sum_of_weights, new_packet->GetTime()); }//curr_round = leaving_packet->GetLast() + (x_new / (sum_of_weights)); }
 
 				}
-			
-
 		}
 
 
-	
 HandlePacket:
 			GPS_time = new_packet->GetTime();
 			findFlow2 = flowHashTable.find(hash);
 			if (findFlow2 != flowHashTable.end())
 				new_packet->SetLast(new_packet->CalculateLast(round_t, findFlow2->second.GetLastVal(), new_packet->GetWeight(), new_packet->GetLength()));
-			else
+			else{
 				new_packet->SetLast(new_packet->CalculateLast(round_t, default_last, new_packet->GetWeight(), new_packet->GetLength()));
+				
+			}
+
+			temp_weight = CalculateTempWeight(flowHashTable, new_packet, hash);
+			sum_of_weights = sum_of_weights + temp_weight;
+
+
 			findFlow2->second.SetLast(new_packet->GetLast());
+			findFlow2->second.packets_q.push(new_packet);
 			new_packet->SetRound(round_t);
 			packetsGPS_q.push(new_packet);
 
 	}
-	if (!packetsWFQ_q_inter.empty() || !packetsGPS_q.empty())
+
+	if (new_packet->GetTime() > curr_time) { leaving_packet = DecideWFQ(&packetsGPS_q); }
+	while (leaving_packet != NULL && new_packet->GetTime() > curr_time)
 	{
-		//packetsWFQ_q_inter.push(packetsGPS_q.top());
-		FillWFQq(&packetsWFQ_q, &packetsWFQ_q_inter);
-		curr_time = HandleLeavingPacket(curr_time, &packetsWFQ_q, new_packet);
+		packetsWFQ_q.push(leaving_packet);
+		if (curr_time < packetsWFQ_q.top()->GetTime())
+			SendPacketWFQ(packetsWFQ_q.top(), packetsWFQ_q.top()->GetTime());
+		else
+			SendPacketWFQ(packetsWFQ_q.top(), curr_time);
+		if (curr_time < packetsWFQ_q.top()->GetTime())
+			curr_time = packetsWFQ_q.top()->GetTime() + packetsWFQ_q.top()->GetLength();
+		else
+			curr_time = curr_time + packetsWFQ_q.top()->GetLength();
+		packetsWFQ_q.pop();
+		if (new_packet->GetTime() > curr_time) { leaving_packet = DecideWFQ(&packetsGPS_q); }
 	}
-		
 
 
 }
