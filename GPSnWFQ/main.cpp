@@ -263,9 +263,7 @@ int main()
 		*leaving_packet;
 	int hash = 0,
 		sum_of_weights = 0,
-		curr_time = 0,
-		temp_weight = 0,
-		size_inter = 0;
+		curr_time = 0;
 	float default_last = 0,
 		round_t = 0,
 		minLast = 0,
@@ -276,9 +274,8 @@ int main()
 
 	NextEvent next_event = Arrival;
 
-	map <int, Flow> flowHashTable;  map <int,Flow> :: iterator findFlow, findFlow2,findFlow3;
+	map <int, Flow> flowHashTable;  map <int,Flow> :: iterator findFlow, findFlow2;
 	std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> packetsGPS_q;
-	std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> packetsWFQ_q;
 
 		
 	while (fgets(newLine, LINE_SIZE, stdin) != NULL) {
@@ -356,18 +353,8 @@ HandlePacket:
 	if (new_packet->GetTime() > curr_time) { leaving_packet = DecideWFQ(&packetsGPS_q); }
 	while (leaving_packet != NULL && new_packet->GetTime() > curr_time)
 	{
-		packetsWFQ_q.push(leaving_packet);
-		if (curr_time < packetsWFQ_q.top()->GetTime())
-			SendPacketWFQ(packetsWFQ_q.top(), packetsWFQ_q.top()->GetTime());
-		else
-			SendPacketWFQ(packetsWFQ_q.top(), curr_time);
-		if (curr_time < packetsWFQ_q.top()->GetTime())
-			curr_time = packetsWFQ_q.top()->GetTime() + packetsWFQ_q.top()->GetLength();
-		else
-			curr_time = curr_time + packetsWFQ_q.top()->GetLength();
-		packetsWFQ_q.pop();
+		curr_time = HandleLeavingPacket(leaving_packet, curr_time);
 		if (new_packet->GetTime() > curr_time) { leaving_packet = DecideWFQ(&packetsGPS_q); }
 	}
-
 
 }
