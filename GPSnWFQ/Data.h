@@ -65,12 +65,13 @@ public:
 	float GetLastVal(void);
 	void SetWeight(int value);
 	void SetLast(float value);
+	int numOfEntries;
 	priority_queue<Packet*, vector<Packet*>, less<vector<Packet*>::value_type> > packets_q;
 
 private:
 	float _lastVal;
 	int _weightFlow = -1;
-	int _numOfEntries;
+	
 
 	
 

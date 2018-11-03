@@ -76,6 +76,7 @@ Packet* ProcessPacket(char * newLine) {
 		new_packet->SetWeight(atoi(tmpEntry[6]));
 
 	new_packet->SentinWFQ = 0;
+	new_packet->CalculateHash();
 	return new_packet;
 
 
@@ -170,10 +171,11 @@ void SendPacketWFQ(Packet *data, int Time)
 }
 
 
-Flow HandleFlow(map <int, Flow> *flowHashTable, Packet* new_packet,int hash,int default_last)
+void HandleFlow(map <int, Flow> *flowHashTable, Packet* new_packet,int hash,int default_last)
 {
 	map <int, Flow> ::iterator findFlow2 = flowHashTable->find(hash);
-	Flow new_flow;
+	Flow *new_flow;
+	new_flow = new Flow;
 
 	if (findFlow2 != flowHashTable->end())
 	{
@@ -186,11 +188,12 @@ Flow HandleFlow(map <int, Flow> *flowHashTable, Packet* new_packet,int hash,int 
 	else
 	{
 		
-		new_flow.SetWeight(new_packet->GetWeight());
-		new_flow.SetLast(default_last);
+		new_flow->SetWeight(new_packet->GetWeight());
+		new_flow->SetLast(default_last);
+		flowHashTable->insert(make_pair(hash, *new_flow));
 		
 	}
-	return new_flow;
+
 }
 
 int CalculateTempWeight(map <int, Flow> flowHashTable, Packet* new_packet,int hash)
@@ -258,7 +261,7 @@ int main()
 
 	NextEvent next_event = Arrival;
 
-	map <int, Flow> flowHashTable;  map <int,Flow> :: iterator findFlow1, findFlow2,findFlow3;
+	map <int, Flow> flowHashTable;  map <int,Flow> :: iterator findFlow, findFlow2,findFlow3;
 	std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> packetsGPS_q;
 	std::priority_queue<Packet*, std::vector<Packet*>, LessThanByLast> packetsWFQ_q;
 
@@ -266,14 +269,9 @@ int main()
 	while (fgets(newLine, LINE_SIZE, stdin) != NULL) {
 
 		new_packet = ProcessPacket(newLine);
-
-		new_packet->CalculateHash();
 		hash = new_packet->GetHash();
 		
-		Flow new_flow = HandleFlow(&flowHashTable, new_packet, hash, default_last); //Not sure this is the right way to do it
-		if(new_flow.GetWeight() != -1) { flowHashTable[hash] = new_flow; }
-
-		findFlow2 = flowHashTable.find(hash);
+		HandleFlow(&flowHashTable, new_packet, hash, default_last); 
 		
 		curr_round = new_packet->CalculateRound(round_t, GPS_time, sum_of_weights, new_packet->GetTime());
 
