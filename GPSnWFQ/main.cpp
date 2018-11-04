@@ -292,6 +292,7 @@ int main()
 
 			while (!packetsGPS_q.empty())
 			{
+
 				minLast = packetsGPS_q.top()->GetLast();
 				if (curr_round <= minLast)
 					next_event = Arrival;
