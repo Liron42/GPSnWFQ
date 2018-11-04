@@ -11,6 +11,7 @@
 stdafx.h
 stdafx.cpp
 targetver.h
+HashTable.h
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
