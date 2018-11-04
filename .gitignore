@@ -9,6 +9,7 @@
 *.txt
 *.vcxproj
 stdafx.h
+stdafx.cpp
 targetver.h
 
 # User-specific files (MonoDevelop/Xamarin Studio)
