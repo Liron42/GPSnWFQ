@@ -12,7 +12,8 @@
 #include <iostream>
 #include <algorithm> 
 #include <queue>
-#include <list> 
+#include <list>
+#include <memory>
 
 using namespace std;
 
@@ -70,7 +71,8 @@ Packet* ProcessPacket(char * newLine) {
 	}
 	time = atoi(tmpEntry[0]); Sport = atoi(tmpEntry[2]); Dport = atoi(tmpEntry[4]); length = atoi(tmpEntry[5]);
 
-	new_packet = new Packet(time, tmpEntry[1], Sport, tmpEntry[3], Dport, length); //DONT FORGET TO FREE MEMORY - THIS IS IN THE HEAP!!
+	std::shared_ptr <Packet> new_packet(new Packet(time, tmpEntry[1], Sport, tmpEntry[3], Dport, length));
+	//new_packet = new Packet(time, tmpEntry[1], Sport, tmpEntry[3], Dport, length); //DONT FORGET TO FREE MEMORY - THIS IS IN THE HEAP!!
 
 	if (tmpEntry[6] == NULL)
 		new_packet->SetWeight(DEFAULT_WEIGHT);
@@ -160,13 +162,6 @@ void SendPacketWFQ(Packet *data, int Time)
 	fprintf(stdout, "%d", data->GetDport());
 	fprintf(stdout, " ");
 	fprintf(stdout, "%d", data->GetLength());
-	/*
-	if (data->originWeight == 1)
-	{
-		fprintf(stdout, " ");
-		fprintf(stdout, "%d", data->weight);
-	}
-	*/
 	fprintf(stdout, " ");
 	fprintf(stdout, "\n");
 
