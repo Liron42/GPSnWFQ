@@ -8,7 +8,7 @@
 *.sln.docstates
 *.txt
 *.vcxproj
-stdafx.h
+#stdafx.h
 stdafx.cpp
 targetver.h
 HashTable.h

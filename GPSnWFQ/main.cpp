@@ -71,9 +71,9 @@ Packet* ProcessPacket(char * newLine) {
 	}
 	time = atoi(tmpEntry[0]); Sport = atoi(tmpEntry[2]); Dport = atoi(tmpEntry[4]); length = atoi(tmpEntry[5]);
 
-	std::shared_ptr <Packet> new_packet(new Packet(time, tmpEntry[1], Sport, tmpEntry[3], Dport, length));
-	//new_packet = new Packet(time, tmpEntry[1], Sport, tmpEntry[3], Dport, length); //DONT FORGET TO FREE MEMORY - THIS IS IN THE HEAP!!
-
+	//auto new_packet = std::shared_ptr <Packet> (new Packet(time, tmpEntry[1], Sport, tmpEntry[3], Dport, length));
+	new_packet = new Packet(time, tmpEntry[1], Sport, tmpEntry[3], Dport, length); //DONT FORGET TO FREE MEMORY - THIS IS IN THE HEAP!!
+	
 	if (tmpEntry[6] == NULL)
 		new_packet->SetWeight(DEFAULT_WEIGHT);
 	else
@@ -171,8 +171,9 @@ void SendPacketWFQ(Packet *data, int Time)
 void HandleFlow(map <int, Flow> *flowHashTable, Packet* new_packet,int hash,int default_last)
 {
 	map <int, Flow> ::iterator findFlow2 = flowHashTable->find(hash);
-	Flow *new_flow;
-	new_flow = new Flow();
+	//Flow *new_flow;
+	//new_flow = new Flow();
+	auto new_flow = std::shared_ptr <Flow>(new Flow());
 
 	if (findFlow2 != flowHashTable->end())
 	{
