@@ -17,7 +17,7 @@ class Packet
 public:
 	//Packet();
 	Packet(int timeI, char SaddI[ADD_SIZE],int SportI, char DaddI[ADD_SIZE],int DportI, int lengthI);
-	//~Packet();
+	~Packet();
 
 	void CalculateHash(void);
 	int CalculateHashHelper(char *str);
@@ -61,12 +61,12 @@ class Flow
 {
 public:
 	Flow();
+	~Flow() {};
 	int GetWeight(void);
 	float GetLastVal(void);
 	void SetWeight(int value);
 	void SetLast(float value);
 	int numOfEntries = 0;
-	//priority_queue<Packet*, vector<Packet*>, less<vector<Packet*>::value_type> > packets_q;
 
 private:
 	float _lastVal;
