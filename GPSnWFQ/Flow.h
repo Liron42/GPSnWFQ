@@ -1,9 +1,6 @@
 #pragma once
 
-
-#define ADD_SIZE 17
 #define LINE_SIZE 100
-#define DEFAULT_WEIGHT 1
 #define DEFAULT_ENTRIES 1
 
 #include <map>
@@ -11,7 +8,6 @@
 #include <queue>
 
 using namespace std;
-
 
 
 class Flow
@@ -30,4 +26,3 @@ private:
 	int _weightFlow = -1;
 
 };
-
