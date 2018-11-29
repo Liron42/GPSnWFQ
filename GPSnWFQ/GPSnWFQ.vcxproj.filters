@@ -18,28 +18,28 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Packet.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Flow.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Packet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Flow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Packet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Flow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -9,7 +9,6 @@ bool operator< (const Packet& packet1, const Packet& packet2)
 	return packet1.GetTime() < packet2.GetTime();
 }
 
-
 Packet::Packet(int timeI, char SaddI[ADD_SIZE], int SportI, char DaddI[ADD_SIZE], int DportI, int lengthI)
 {
 	_time = timeI;

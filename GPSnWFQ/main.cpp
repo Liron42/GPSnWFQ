@@ -95,9 +95,6 @@ int main()
 
 		new_packet = ProcessPacket(newLine);
 		hash = new_packet->GetHash();
-		
-		if (new_packet->GetTime() == 303092)
-			hash = new_packet->GetHash();
 
 		HandleFlow(&flowHashTable, new_packet, hash, default_last);
 
@@ -146,7 +143,7 @@ int main()
 
 				if (sum_of_weights != 0) 
 					curr_round = new_packet->CalculateRound(round_t, GPS_time, sum_of_weights, new_packet->GetTime());
-				//leaving_packet.reset();
+				leaving_packet.reset();
 
 			}
 		}
