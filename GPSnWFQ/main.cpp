@@ -172,4 +172,5 @@ int main()
 		if (new_packet->GetTime() > curr_time) { leaving_packet = DecideWFQ(&packetsGPS_q); }
 		leaving_packet.reset();
 	}
+	flowHashTable.clear();
 }
